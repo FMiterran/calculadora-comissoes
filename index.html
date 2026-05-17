@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Comissões</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --surface: #111318;
+    --card: #161b22;
+    --border: #21262d;
+    --accent: #f0a500;
+    --accent2: #ff6b35;
+    --green: #3fb950;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --subtle: #30363d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(240,165,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240,165,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header { margin-bottom: 48px; }
+
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-tag::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 88px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  h1 span { color: var(--accent); }
+
+  .header-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 16px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--subtle); }
+
+  .input-group { margin-bottom: 18px; }
+  .input-group:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .input-wrapper { position: relative; }
+
+  .currency-prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .money-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px 12px 11px 36px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .money-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(240,165,0,0.08);
+  }
+  .money-input::placeholder { color: var(--subtle); }
+
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .toggle-btn.active {
+    background: rgba(240,165,0,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .meta-card { border-left: 3px solid var(--accent2); }
+
+  .info-box {
+    background: rgba(248,81,73,0.06);
+    border: 1px solid rgba(248,81,73,0.2);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.7;
+    margin-top: 16px;
+  }
+  .info-box strong { color: var(--accent2); }
+
+  .calc-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0b0d;
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin: 24px 0;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .calc-btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: background 0.2s; }
+  .calc-btn:hover::after { background: rgba(255,255,255,0.1); }
+  .calc-btn:active { transform: scale(0.99); }
+
+  #results { display: none; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .total-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+  .total-value { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 56px); color: var(--accent); letter-spacing: 0.02em; line-height: 1; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-name { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .result-amount { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); font-weight: 500; }
+  .result-amount.highlight { color: var(--accent); }
+  .result-amount.green { color: var(--green); }
+  .result-amount.zero  { color: var(--muted); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .badge.success { background: rgba(63,185,80,0.1);  border: 1px solid rgba(63,185,80,0.3);  color: var(--green); }
+  .badge.fail    { background: rgba(248,81,73,0.1);   border: 1px solid rgba(248,81,73,0.3);   color: var(--red); }
+  .badge.warning { background: rgba(240,165,0,0.1);   border: 1px solid rgba(240,165,0,0.3);   color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .status-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.green  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+  .status-dot.red    { background: var(--red);     box-shadow: 0 0 6px var(--red); }
+  .status-dot.yellow { background: var(--accent);  box-shadow: 0 0 6px var(--accent); }
+  .status-text { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.5; }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+  .reset-btn:hover { border-color: var(--subtle); color: var(--text); }
+
+  .pct-bar-wrap { margin-top: 8px; }
+  .pct-bar-labels { display: flex; justify-content: space-between; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); margin-bottom: 4px; }
+  .pct-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pct-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .pct-bar-fill.ok   { background: var(--green); }
+  .pct-bar-fill.warn { background: var(--accent); }
+  .pct-bar-fill.bad  { background: var(--red); }
+
+  .rate-chip {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(240,165,0,0.07);
+    border: 1px solid rgba(240,165,0,0.15);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-tag">Sistema de comissões</div>
+    <h1>CALCULADORA DE<br><span>GANHOS</span></h1>
+    <p class="header-sub">Comissão + premiação <span style="margin-left:16px; opacity:0.4">v1.2</span></p>
+  </header>
+
+  <div class="section-label">01 · Valores de Venda</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="input-group">
+        <label>Senha Individual <span class="rate-chip">1%</span></label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="senhaIndividual" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="input-group">
+        <label>Produtos Nacionais <span class="rate-chip">0,50%</span></label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="nacionais" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="input-group">
+        <label>Produtos Importados <span class="rate-chip">1%</span></label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="importados" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="input-group">
+        <label>Representante <span class="rate-chip">0,50%</span></label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="externo" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:32px">02 · Premiação / Meta</div>
+  <div class="card meta-card">
+
+    <!-- Meta do mês — sempre visível -->
+    <div class="grid-2">
+      <div class="input-group">
+        <label>Meta do mês (R$)</label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="metaMes" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Total vendido pelo Vendedor Interno (R$)</label>
+        <div class="input-wrapper">
+          <span class="currency-prefix">R$</span>
+          <input class="money-input" id="totalVendedorGeral" placeholder="0,00" inputmode="numeric" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de progresso da meta -->
+    <div id="metaBar" style="display:none; margin-bottom:20px">
+      <div class="pct-bar-labels">
+        <span>Progresso da meta</span>
+        <span id="metaBarLabel">0%</span>
+      </div>
+      <div class="pct-bar" style="height:6px">
+        <div class="pct-bar-fill bad" id="barMeta" style="width:0%"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:6px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="metaVendidoLabel"></span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="metaFaltaLabel"></span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label>Bateu a meta?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" id="btnMetaSim" onclick="setMeta(true)">✓ Sim</button>
+        <button class="toggle-btn active" id="btnMetaNao" onclick="setMeta(false)">✗ Não</button>
+      </div>
+    </div>
+
+    <!-- CENÁRIO: BATEU META -->
+    <div id="sectionMeta" style="display:none; margin-top:4px">
+      <div class="info-box" style="background:rgba(63,185,80,0.06);border-color:rgba(63,185,80,0.2); margin-bottom:0">
+        <strong style="color:var(--green)">Premiação por meta batida:</strong><br>
+        +0,50% sobre Produtos Nacionais + 1,00% sobre Produtos Importados<br>
+        <span style="color:var(--muted)">(calculado automaticamente com os valores da seção 01)</span>
+      </div>
+    </div>
+
+    <!-- CENÁRIO: NÃO BATEU META -->
+    <div id="sectionNaoMeta">
+      <!-- Condição 1: 40% da meta -->
+      <div id="bloco40pct">
+        <div class="info-box">
+          <strong>Condição 1 — 40% da meta:</strong><br>
+          O vendedor interno precisa ter vendido ≥40% do valor da meta do mês.<br>
+          <span id="info40pct" style="color:var(--muted)">Preencha a meta e o total vendido acima para ver o resultado.</span>
+        </div>
+      </div>
+
+      <!-- Condição 2: proporção pneus — só aparece se atingiu 40% -->
+      <div id="bloco70_30" style="display:none; margin-top:16px">
+        <div class="section-label" style="margin-top:4px">Condição 2 — Proporção: 70% peças + 30% pneus</div>
+        <div class="input-group">
+          <label>Vendas de Pneus (R$) <span class="rate-chip" style="background:rgba(255,107,53,0.07);border-color:rgba(255,107,53,0.2);color:var(--accent2)">≥30% do total</span></label>
+          <div class="input-wrapper">
+            <span class="currency-prefix">R$</span>
+            <input class="money-input" id="vendaPneus" placeholder="0,00" inputmode="numeric" autocomplete="off">
+          </div>
+        </div>
+        <div id="percentBars" style="display:none; margin-top:4px; margin-bottom:8px">
+          <div class="pct-bar-wrap" style="margin-bottom:10px">
+            <div class="pct-bar-labels"><span>Peças (restante)</span><span id="pctPecasLabel">0%</span></div>
+            <div class="pct-bar"><div class="pct-bar-fill bad" id="barPecas" style="width:0%"></div></div>
+          </div>
+          <div class="pct-bar-wrap">
+            <div class="pct-bar-labels"><span>Pneus</span><span id="pctPneusLabel">0%</span></div>
+            <div class="pct-bar"><div class="pct-bar-fill bad" id="barPneus" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="info-box" style="margin-top:8px">
+          <strong>Bônus liberado se:</strong> ≥40% da meta <strong>E</strong> proporção ≥70% peças / ≥30% pneus → +1% sobre Produtos Importados
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calcular()">▶ CALCULAR GANHOS</button>
+
+  <div id="results">
+    <div class="section-label">03 · Resultado</div>
+    <div class="card" style="border-color: rgba(240,165,0,0.3)">
+      <div class="result-header">
+        <div>
+          <div class="total-label">Total a Receber</div>
+          <div class="total-value" id="totalGeral">R$ 0,00</div>
+        </div>
+        <div id="statusBadge"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label" style="margin-bottom:12px">Detalhamento</div>
+
+      <div class="result-row">
+        <span class="result-name">Senha Individual (1%)</span>
+        <span class="result-amount" id="rSenha">R$ 0,00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-name">Nacionais (0,50%)</span>
+        <span class="result-amount" id="rNacionais">R$ 0,00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-name">Importados (1%)</span>
+        <span class="result-amount" id="rImportados">R$ 0,00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-name">Representante (0,50%)</span>
+        <span class="result-amount" id="rExterno">R$ 0,00</span>
+      </div>
+      <div class="result-row" style="border-top: 1px solid var(--border); padding-top:16px; margin-top:4px">
+        <span class="result-name" style="color:var(--text)">Subtotal Comissões</span>
+        <span class="result-amount highlight" id="rSubtotal">R$ 0,00</span>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label" style="margin-bottom:12px">Premiação</div>
+
+      <div class="result-row" id="rowBonusMetaNac">
+        <span class="result-name">Bônus meta — Nacionais (+0,50%)</span>
+        <span class="result-amount" id="rBonusMetaNac">R$ 0,00</span>
+      </div>
+      <div class="result-row" id="rowBonusMetaImp">
+        <span class="result-name">Bônus meta — Importados (+1,00%)</span>
+        <span class="result-amount" id="rBonusMetaImp">R$ 0,00</span>
+      </div>
+      <div class="result-row" id="rowBonus40">
+        <span class="result-name">Bônus 40% meta — Importados (+1%)</span>
+        <span class="result-amount" id="rBonus40">R$ 0,00</span>
+      </div>
+
+      <div id="statusConditions" style="margin-top:16px"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetar()">↺ Limpar e recalcular</button>
+  </div>
+
+</div>
+
+<script>
+  /* ══════════════════════════════════════
+     MÁSCARA MONETÁRIA BRASILEIRA
+     Digita: 1 → 0,01
+             12 → 0,12
+             123 → 1,23
+             1234 → 12,34
+             12345 → 123,45
+             123456 → 1.234,56
+     ══════════════════════════════════════ */
+
+  function applyMask(input) {
+    // Pega somente os dígitos do que foi digitado
+    let digits = input.value.replace(/\D/g, '');
+
+    // Limita a 13 dígitos (valor máximo: 99.999.999.999,99)
+    if (digits.length > 13) digits = digits.slice(0, 13);
+
+    if (!digits || digits === '0'.repeat(digits.length)) {
+      input.value = '';
+      return;
+    }
+
+    // Interpreta como centavos
+    const cents = parseInt(digits, 10);
+    const reais = cents / 100;
+
+    // Formata no padrão brasileiro: 1.234,56
+    input.value = reais.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function getRaw(id) {
+    const val = document.getElementById(id).value.trim();
+    if (!val) return 0;
+    // Remove pontos de milhar, substitui vírgula decimal por ponto
+    return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  // Inicializa máscara em todos os inputs monetários
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.money-input').forEach(input => {
+
+      input.addEventListener('input', () => {
+        applyMask(input);
+        if (input.id === 'vendaPneus') updatePercentBars();
+        if (input.id === 'metaMes' || input.id === 'totalVendedorGeral') updateMetaBar();
+      });
+
+      // Bloqueia qualquer tecla que não seja dígito ou tecla de controle
+      input.addEventListener('keydown', e => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        const special = [
+          'Backspace','Delete','Tab','Enter','Escape',
+          'ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+          'Home','End'
+        ].includes(e.key);
+        if (ctrl || special) return;
+        if (!/^\d$/.test(e.key)) e.preventDefault();
+      });
+
+      // Cola: aceita apenas dígitos da área de transferência
+      input.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        const digitsOnly = text.replace(/\D/g, '');
+        if (!digitsOnly) return;
+        // Acrescenta ao valor atual
+        const current = input.value.replace(/\D/g, '');
+        input.value = current + digitsOnly;
+        applyMask(input);
+      });
+    });
+  });
+
+  /* ══════════════════════════════════════
+     LÓGICA DE CÁLCULO
+     ══════════════════════════════════════ */
+  let bateuMeta = false;
+
+  function setMeta(sim) {
+    bateuMeta = sim;
+    document.getElementById('btnMetaSim').classList.toggle('active', sim);
+    document.getElementById('btnMetaNao').classList.toggle('active', !sim);
+    document.getElementById('sectionMeta').style.display    = sim ? 'block' : 'none';
+    document.getElementById('sectionNaoMeta').style.display = sim ? 'none'  : 'block';
+    // Reset bloco 70/30 ao trocar
+    document.getElementById('bloco70_30').style.display = 'none';
+    document.getElementById('percentBars').style.display = 'none';
+  }
+
+  function fmt(val) {
+    return 'R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function updateMetaBar() {
+    const meta    = getRaw('metaMes');
+    const vendido = getRaw('totalVendedorGeral');
+    if (meta <= 0 || vendido <= 0) {
+      document.getElementById('metaBar').style.display = 'none';
+      return;
+    }
+    document.getElementById('metaBar').style.display = 'block';
+    const pct = Math.min((vendido / meta) * 100, 100);
+    const bar = document.getElementById('barMeta');
+    bar.style.width = pct + '%';
+    bar.className = 'pct-bar-fill ' + (pct >= 100 ? 'ok' : pct >= 70 ? 'warn' : 'bad');
+    document.getElementById('metaBarLabel').textContent = pct.toFixed(1) + '%';
+    document.getElementById('metaVendidoLabel').textContent = 'Vendido: ' + fmt(vendido);
+    const falta = meta - vendido;
+    document.getElementById('metaFaltaLabel').textContent = falta > 0
+      ? 'Faltam: ' + fmt(falta)
+      : '✓ Meta atingida';
+
+    // Controla exibição do bloco 40% em tempo real (só no cenário não bateu meta)
+    if (!bateuMeta) {
+      const pct40 = (vendido / meta) * 100;
+      const atingiu40 = pct40 >= 40;
+
+      // Atualiza texto informativo dentro do info-box
+      const info = document.getElementById('info40pct');
+      if (info) {
+        info.textContent = atingiu40
+          ? `✓ ${pct40.toFixed(1)}% da meta atingido — condição de 40% cumprida!`
+          : `✗ ${pct40.toFixed(1)}% da meta — precisa de 40% (${fmt(meta * 0.4)})`;
+        info.style.color = atingiu40 ? 'var(--green)' : 'var(--red)';
+      }
+
+      // Abre o bloco de proporção pneus apenas se atingiu 40%
+      document.getElementById('bloco70_30').style.display = atingiu40 ? 'block' : 'none';
+      if (!atingiu40) {
+        document.getElementById('percentBars').style.display = 'none';
+      }
+    }
+  }
+
+  function updatePercentBars() {
+    const totalVendido = getRaw('totalVendedorGeral');
+    const pneus = getRaw('vendaPneus');
+    if (totalVendido <= 0 || pneus <= 0) {
+      document.getElementById('percentBars').style.display = 'none';
+      return;
+    }
+    document.getElementById('percentBars').style.display = 'block';
+
+    // Peças = total vendido - pneus
+    const pecas  = Math.max(totalVendido - pneus, 0);
+    const total  = pecas + pneus;
+    const pPneus = (pneus / total) * 100;
+    const pPecas = (pecas / total) * 100;
+
+    const barP = document.getElementById('barPecas');
+    const barT = document.getElementById('barPneus');
+    barP.style.width = Math.min(pPecas, 100) + '%';
+    barT.style.width = Math.min(pPneus, 100) + '%';
+
+    barP.className = 'pct-bar-fill ' + (pPecas >= 70 ? 'ok' : pPecas >= 55 ? 'warn' : 'bad');
+    barT.className = 'pct-bar-fill ' + (pPneus >= 30 ? 'ok' : pPneus >= 20 ? 'warn' : 'bad');
+
+    document.getElementById('pctPecasLabel').textContent = pPecas.toFixed(1) + '%';
+    document.getElementById('pctPneusLabel').textContent = pPneus.toFixed(1) + '%';
+  }
+
+  function calcular() {
+    // ── Comissão base (não muda) ──
+    const senha = getRaw('senhaIndividual');
+    const nac   = getRaw('nacionais');
+    const imp   = getRaw('importados');
+    const ext   = getRaw('externo');
+
+    const cSenha      = senha * 0.01;
+    const cNacionais  = nac   * 0.005;
+    const cImportados = imp   * 0.01;
+    const cExterno    = ext   * 0.005;
+    const subtotal    = cSenha + cNacionais + cImportados + cExterno;
+
+    let bonusMetaNac = 0;
+    let bonusMetaImp = 0;
+    let bonus40      = 0;
+    let statusHTML   = '';
+
+    if (bateuMeta) {
+      // ── Cenário 2: Bateu meta ──
+      bonusMetaNac = nac * 0.005;  // +0,50% sobre Nacionais
+      bonusMetaImp = imp * 0.01;   // +1,00% sobre Importados
+
+      statusHTML += `<div class="status-row">
+        <div class="status-dot green"></div>
+        <div class="status-text">✓ Meta batida → +0,50% Nacionais = ${fmt(bonusMetaNac)}</div>
+      </div>`;
+      statusHTML += `<div class="status-row">
+        <div class="status-dot green"></div>
+        <div class="status-text">✓ Meta batida → +1,00% Importados = ${fmt(bonusMetaImp)}</div>
+      </div>`;
+
+    } else {
+      // ── Cenário 3: Não bateu meta ──
+      const meta    = getRaw('metaMes');
+      const vendido = getRaw('totalVendedorGeral');
+      const pneus   = getRaw('vendaPneus');
+
+      let atingiu40       = false;
+      let atingeProporcao = false;
+
+      if (meta > 0 && vendido > 0) {
+        const pct40 = (vendido / meta) * 100;
+        atingiu40 = pct40 >= 40;
+        statusHTML += `<div class="status-row">
+          <div class="status-dot ${atingiu40 ? 'yellow' : 'red'}"></div>
+          <div class="status-text">${atingiu40 ? '✓' : '✗'} Vendido: ${pct40.toFixed(1)}% da meta (mínimo 40% = ${fmt(meta * 0.4)})</div>
+        </div>`;
+      }
+
+      if (atingiu40 && vendido > 0 && pneus > 0) {
+        const pecas  = Math.max(vendido - pneus, 0);
+        const total  = pecas + pneus;
+        const pPneus = (pneus / total) * 100;
+        const pPecas = (pecas / total) * 100;
+        atingeProporcao = pPecas >= 70 && pPneus >= 30;
+
+        statusHTML += `<div class="status-row">
+          <div class="status-dot ${atingeProporcao ? 'green' : 'red'}"></div>
+          <div class="status-text">${atingeProporcao ? '✓' : '✗'} Proporção: ${pPecas.toFixed(1)}% peças / ${pPneus.toFixed(1)}% pneus (mínimo 70% peças / 30% pneus)</div>
+        </div>`;
+      }
+
+      if (atingiu40 && atingeProporcao) {
+        bonus40 = imp * 0.01;
+        statusHTML += `<div class="status-row">
+          <div class="status-dot green"></div>
+          <div class="status-text">🎉 Bônus +1% sobre Importados liberado → ${fmt(bonus40)}</div>
+        </div>`;
+      } else {
+        const motivo = [];
+        if (!atingiu40)       motivo.push('não atingiu 40% da meta');
+        if (atingiu40 && !atingeProporcao) motivo.push('proporção 70/30 peças/pneus não atingida');
+        if (motivo.length) {
+          statusHTML += `<div class="status-row">
+            <div class="status-dot red"></div>
+            <div class="status-text">Bônus não liberado: ${motivo.join(' · ')}</div>
+          </div>`;
+        }
+      }
+    }
+
+    const total = subtotal + bonusMetaNac + bonusMetaImp + bonus40;
+
+    document.getElementById('rSenha').textContent         = fmt(cSenha);
+    document.getElementById('rNacionais').textContent     = fmt(cNacionais);
+    document.getElementById('rImportados').textContent    = fmt(cImportados);
+    document.getElementById('rExterno').textContent       = fmt(cExterno);
+    document.getElementById('rSubtotal').textContent      = fmt(subtotal);
+    document.getElementById('rBonusMetaNac').textContent  = fmt(bonusMetaNac);
+    document.getElementById('rBonusMetaImp').textContent  = fmt(bonusMetaImp);
+    document.getElementById('rBonus40').textContent       = fmt(bonus40);
+    document.getElementById('totalGeral').textContent     = fmt(total);
+
+    document.getElementById('rBonusMetaNac').className = 'result-amount ' + (bonusMetaNac > 0 ? 'green' : 'zero');
+    document.getElementById('rBonusMetaImp').className = 'result-amount ' + (bonusMetaImp > 0 ? 'green' : 'zero');
+    document.getElementById('rBonus40').className      = 'result-amount ' + (bonus40      > 0 ? 'green' : 'zero');
+
+    // Mostra/esconde linhas conforme o cenário
+    document.getElementById('rowBonusMetaNac').style.display = bateuMeta ? 'flex' : 'none';
+    document.getElementById('rowBonusMetaImp').style.display = bateuMeta ? 'flex' : 'none';
+    document.getElementById('rowBonus40').style.display      = bateuMeta ? 'none' : 'flex';
+
+    let badge = '';
+    if (bateuMeta)           badge = '<span class="badge success">✓ Meta Batida</span>';
+    else if (bonus40 > 0)    badge = '<span class="badge warning">◆ Bônus 40%</span>';
+    else                     badge = '<span class="badge fail">✗ Sem Premiação</span>';
+
+    document.getElementById('statusBadge').innerHTML      = badge;
+    document.getElementById('statusConditions').innerHTML = statusHTML;
+
+    const res = document.getElementById('results');
+    res.style.display = 'block';
+    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetar() {
+    document.querySelectorAll('.money-input').forEach(i => i.value = '');
+    document.getElementById('results').style.display    = 'none';
+    document.getElementById('percentBars').style.display = 'none';
+    document.getElementById('metaBar').style.display    = 'none';
+    document.getElementById('bloco70_30').style.display = 'none';
+    const info = document.getElementById('info40pct');
+    if (info) { info.textContent = 'Preencha a meta e o total vendido acima para ver o resultado.'; info.style.color = ''; }
+    setMeta(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
