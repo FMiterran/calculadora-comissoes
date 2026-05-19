@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculadora de Comissões</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230a0b0d'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial Black,sans-serif' font-weight='900' font-size='28' fill='%23f0a500'>R$</text></svg>">
 <style>
   :root {
     --bg: #0a0b0d;
@@ -192,8 +193,14 @@
     font-family: 'DM Mono', monospace;
     line-height: 1.7;
     margin-top: 16px;
+    transition: background 0.4s, border-color 0.4s;
   }
-  .info-box strong { color: var(--accent2); }
+  .info-box strong { color: var(--accent2); transition: color 0.4s; }
+  .info-box.success {
+    background: rgba(63,185,80,0.08);
+    border-color: rgba(63,185,80,0.35);
+  }
+  .info-box.success strong { color: var(--green); }
 
   .calc-btn {
     width: 100%;
@@ -305,6 +312,45 @@
     color: var(--accent);
     margin-left: 8px;
   }
+
+  @media print {
+    html, body {
+      height: auto !important;
+      overflow: visible !important;
+    }
+    body * { visibility: hidden !important; }
+    #printArea {
+      display: block !important;
+      visibility: visible !important;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      background: #fff;
+      color: #111;
+      font-family: 'DM Sans', sans-serif;
+      padding: 32px 40px;
+      font-size: 13px;
+      page-break-after: avoid;
+    }
+    #printArea * { visibility: visible !important; }
+    #printArea .p-header { margin-bottom: 20px; border-bottom: 2px solid #f0a500; padding-bottom: 14px; }
+    #printArea .p-title { font-size: 26px; font-weight: 900; letter-spacing: 0.05em; color: #111; }
+    #printArea .p-sub { font-size: 11px; color: #666; margin-top: 4px; }
+    #printArea .p-section { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #c47f00; margin: 16px 0 6px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    #printArea .p-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f5f5f5; }
+    #printArea .p-label { color: #555; }
+    #printArea .p-value { font-weight: 600; color: #111; font-family: monospace; }
+    #printArea .p-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 0; margin-top: 6px; border-top: 2px solid #f0a500; }
+    #printArea .p-total-label { font-size: 14px; font-weight: 700; color: #111; }
+    #printArea .p-total-value { font-size: 22px; font-weight: 900; color: #f0a500; font-family: monospace; }
+    #printArea .p-green { color: #2a9a45 !important; }
+    #printArea .p-zero  { color: #aaa !important; }
+    #printArea .p-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-left: 10px; }
+    #printArea .p-badge.meta  { background: #e6f4ea; color: #2a9a45; }
+    #printArea .p-badge.bonus { background: #fff8e1; color: #c47f00; }
+    #printArea .p-badge.sem   { background: #fdecea; color: #c62828; }
+    #printArea .p-footer { margin-top: 24px; font-size: 10px; color: #aaa; text-align: right; border-top: 1px solid #eee; padding-top: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -313,7 +359,7 @@
   <header>
     <div class="header-tag">Sistema de comissões</div>
     <h1>CALCULADORA DE<br><span>GANHOS</span></h1>
-    <p class="header-sub">Comissão + premiação <span style="margin-left:16px; opacity:0.4">v1.2</span></p>
+    <p class="header-sub">Comissão + premiação <span style="margin-left:16px; opacity:0.4">v1.3</span></p>
   </header>
 
   <div class="section-label">01 · Valores de Venda</div>
@@ -359,7 +405,16 @@
   <div class="section-label" style="margin-top:32px">02 · Premiação / Meta</div>
   <div class="card meta-card">
 
-    <!-- Meta do mês — sempre visível -->
+    <!-- Pergunta primeiro -->
+    <div class="input-group">
+      <label>Bateu a meta?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" id="btnMetaSim" onclick="setMeta(true)">✓ Sim</button>
+        <button class="toggle-btn active" id="btnMetaNao" onclick="setMeta(false)">✗ Não</button>
+      </div>
+    </div>
+
+    <!-- Campos de meta e vendas -->
     <div class="grid-2">
       <div class="input-group">
         <label>Meta do mês (R$)</label>
@@ -392,14 +447,6 @@
       </div>
     </div>
 
-    <div class="input-group">
-      <label>Bateu a meta?</label>
-      <div class="toggle-group">
-        <button class="toggle-btn" id="btnMetaSim" onclick="setMeta(true)">✓ Sim</button>
-        <button class="toggle-btn active" id="btnMetaNao" onclick="setMeta(false)">✗ Não</button>
-      </div>
-    </div>
-
     <!-- CENÁRIO: BATEU META -->
     <div id="sectionMeta" style="display:none; margin-top:4px">
       <div class="info-box" style="background:rgba(63,185,80,0.06);border-color:rgba(63,185,80,0.2); margin-bottom:0">
@@ -413,18 +460,18 @@
     <div id="sectionNaoMeta">
       <!-- Condição 1: 40% da meta -->
       <div id="bloco40pct">
-        <div class="info-box">
-          <strong>Condição 1 — 40% da meta:</strong><br>
-          O vendedor interno precisa ter vendido ≥40% do valor da meta do mês.<br>
-          <span id="info40pct" style="color:var(--muted)">Preencha a meta e o total vendido acima para ver o resultado.</span>
-        </div>
+      <div id="infoBox40" class="info-box">
+        <strong>Condição 1 — 40% da meta:</strong><br>
+        O vendedor interno precisa ter vendido ≥40% do valor da meta do mês.<br>
+        <span id="info40pct" style="color:var(--muted)">Preencha a meta e o total vendido acima para ver o resultado.</span>
+      </div>
       </div>
 
       <!-- Condição 2: proporção pneus — só aparece se atingiu 40% -->
       <div id="bloco70_30" style="display:none; margin-top:16px">
-        <div class="section-label" style="margin-top:4px">Condição 2 — Proporção: 70% peças + 30% pneus</div>
+        <div class="section-label" style="margin-top:4px">Condição 2 — Pneus ≤ 35% do total vendido</div>
         <div class="input-group">
-          <label>Vendas de Pneus (R$) <span class="rate-chip" style="background:rgba(255,107,53,0.07);border-color:rgba(255,107,53,0.2);color:var(--accent2)">≥30% do total</span></label>
+          <label>Vendas de Pneus (R$) <span class="rate-chip" style="background:rgba(255,107,53,0.07);border-color:rgba(255,107,53,0.2);color:var(--accent2)">máx 35% do total</span></label>
           <div class="input-wrapper">
             <span class="currency-prefix">R$</span>
             <input class="money-input" id="vendaPneus" placeholder="0,00" inputmode="numeric" autocomplete="off">
@@ -432,16 +479,15 @@
         </div>
         <div id="percentBars" style="display:none; margin-top:4px; margin-bottom:8px">
           <div class="pct-bar-wrap" style="margin-bottom:10px">
-            <div class="pct-bar-labels"><span>Peças (restante)</span><span id="pctPecasLabel">0%</span></div>
-            <div class="pct-bar"><div class="pct-bar-fill bad" id="barPecas" style="width:0%"></div></div>
+            <div class="pct-bar-labels"><span>Peças (restante)</span><span id="pctPecasLabel">0%</span></div>            <div class="pct-bar"><div class="pct-bar-fill bad" id="barPecas" style="width:0%"></div></div>
           </div>
           <div class="pct-bar-wrap">
             <div class="pct-bar-labels"><span>Pneus</span><span id="pctPneusLabel">0%</span></div>
             <div class="pct-bar"><div class="pct-bar-fill bad" id="barPneus" style="width:0%"></div></div>
           </div>
         </div>
-        <div class="info-box" style="margin-top:8px">
-          <strong>Bônus liberado se:</strong> ≥40% da meta <strong>E</strong> proporção ≥70% peças / ≥30% pneus → +1% sobre Produtos Importados
+        <div id="infoBoxBonus" class="info-box" style="margin-top:8px">
+          <strong>Bônus liberado se:</strong> ≥40% da meta <strong>E</strong> pneus ≤35% do total vendido → +1% sobre Produtos Importados
         </div>
       </div>
     </div>
@@ -503,8 +549,14 @@
       <div id="statusConditions" style="margin-top:16px"></div>
     </div>
 
-    <button class="reset-btn" onclick="resetar()">↺ Limpar e recalcular</button>
+    <div style="display:flex; gap:12px; margin-top:8px; flex-wrap:wrap">
+      <button class="reset-btn" onclick="resetar()">↺ Limpar e recalcular</button>
+      <button class="reset-btn" onclick="gerarPDF()" style="border-color:var(--accent);color:var(--accent)">⬇ Salvar como PDF</button>
+    </div>
   </div>
+
+  <!-- ÁREA DE IMPRESSÃO (oculta na tela) -->
+  <div id="printArea" style="display:none"></div>
 
 </div>
 
@@ -631,12 +683,14 @@
 
       // Atualiza texto informativo dentro do info-box
       const info = document.getElementById('info40pct');
+      const box40 = document.getElementById('infoBox40');
       if (info) {
         info.textContent = atingiu40
           ? `✓ ${pct40.toFixed(1)}% da meta atingido — condição de 40% cumprida!`
           : `✗ ${pct40.toFixed(1)}% da meta — precisa de 40% (${fmt(meta * 0.4)})`;
         info.style.color = atingiu40 ? 'var(--green)' : 'var(--red)';
       }
+      if (box40) box40.classList.toggle('success', atingiu40);
 
       // Abre o bloco de proporção pneus apenas se atingiu 40%
       document.getElementById('bloco70_30').style.display = atingiu40 ? 'block' : 'none';
@@ -666,11 +720,16 @@
     barP.style.width = Math.min(pPecas, 100) + '%';
     barT.style.width = Math.min(pPneus, 100) + '%';
 
-    barP.className = 'pct-bar-fill ' + (pPecas >= 70 ? 'ok' : pPecas >= 55 ? 'warn' : 'bad');
-    barT.className = 'pct-bar-fill ' + (pPneus >= 30 ? 'ok' : pPneus >= 20 ? 'warn' : 'bad');
+    barP.className = 'pct-bar-fill ' + (pPecas >= 65 ? 'ok' : pPecas >= 50 ? 'warn' : 'bad');
+    barT.className = 'pct-bar-fill ' + (pPneus <= 35 ? 'ok' : pPneus <= 45 ? 'warn' : 'bad');
 
     document.getElementById('pctPecasLabel').textContent = pPecas.toFixed(1) + '%';
     document.getElementById('pctPneusLabel').textContent = pPneus.toFixed(1) + '%';
+
+    // Atualiza cor da caixa do bônus em tempo real
+    const atingiu40 = document.getElementById('infoBox40')?.classList.contains('success');
+    const infoBoxBonus = document.getElementById('infoBoxBonus');
+    if (infoBoxBonus) infoBoxBonus.classList.toggle('success', atingiu40 && pPneus <= 35);
   }
 
   function calcular() {
@@ -728,11 +787,11 @@
         const total  = pecas + pneus;
         const pPneus = (pneus / total) * 100;
         const pPecas = (pecas / total) * 100;
-        atingeProporcao = pPecas >= 70 && pPneus >= 30;
+        atingeProporcao = pPneus <= 35;
 
         statusHTML += `<div class="status-row">
           <div class="status-dot ${atingeProporcao ? 'green' : 'red'}"></div>
-          <div class="status-text">${atingeProporcao ? '✓' : '✗'} Proporção: ${pPecas.toFixed(1)}% peças / ${pPneus.toFixed(1)}% pneus (mínimo 70% peças / 30% pneus)</div>
+          <div class="status-text">${atingeProporcao ? '✓' : '✗'} Pneus: ${pPneus.toFixed(1)}% do total vendido — ${atingeProporcao ? 'dentro do limite de 35%' : 'acima do limite de 35%, bônus bloqueado'}</div>
         </div>`;
       }
 
@@ -742,10 +801,9 @@
           <div class="status-dot green"></div>
           <div class="status-text">🎉 Bônus +1% sobre Importados liberado → ${fmt(bonus40)}</div>
         </div>`;
-      } else {
-        const motivo = [];
+      } else {        const motivo = [];
         if (!atingiu40)       motivo.push('não atingiu 40% da meta');
-        if (atingiu40 && !atingeProporcao) motivo.push('proporção 70/30 peças/pneus não atingida');
+        if (atingiu40 && !atingeProporcao) motivo.push('pneus acima de 35% do total vendido');
         if (motivo.length) {
           statusHTML += `<div class="status-row">
             <div class="status-dot red"></div>
@@ -770,6 +828,10 @@
     document.getElementById('rBonusMetaNac').className = 'result-amount ' + (bonusMetaNac > 0 ? 'green' : 'zero');
     document.getElementById('rBonusMetaImp').className = 'result-amount ' + (bonusMetaImp > 0 ? 'green' : 'zero');
     document.getElementById('rBonus40').className      = 'result-amount ' + (bonus40      > 0 ? 'green' : 'zero');
+
+    // Cor da caixa de bônus conforme resultado
+    const infoBoxBonus = document.getElementById('infoBoxBonus');
+    if (infoBoxBonus) infoBoxBonus.classList.toggle('success', bonus40 > 0);
 
     // Mostra/esconde linhas conforme o cenário
     document.getElementById('rowBonusMetaNac').style.display = bateuMeta ? 'flex' : 'none';
@@ -797,8 +859,63 @@
     document.getElementById('bloco70_30').style.display = 'none';
     const info = document.getElementById('info40pct');
     if (info) { info.textContent = 'Preencha a meta e o total vendido acima para ver o resultado.'; info.style.color = ''; }
+    const box40 = document.getElementById('infoBox40');
+    if (box40) box40.classList.remove('success');
+    const boxBonus = document.getElementById('infoBoxBonus');
+    if (boxBonus) boxBonus.classList.remove('success');
     setMeta(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function gerarPDF() {
+    const g = id => document.getElementById(id)?.textContent?.trim() || 'R$ 0,00';
+    const isZero = val => val === 'R$ 0,00';
+
+    // Badge
+    const badgeEl = document.getElementById('statusBadge');
+    const badgeText = badgeEl?.innerText?.trim() || '';
+    let badgeClass = 'sem', badgeLabel = 'Sem Premiação';
+    if (badgeText.includes('Meta Batida'))  { badgeClass = 'meta';  badgeLabel = '✓ Meta Batida'; }
+    if (badgeText.includes('Bônus 40%'))    { badgeClass = 'bonus'; badgeLabel = '◆ Bônus 40%'; }
+
+    // Linhas de premiação visíveis
+    const rowMetaNac = document.getElementById('rowBonusMetaNac');
+    const rowMetaImp = document.getElementById('rowBonusMetaImp');
+    const rowBonus40 = document.getElementById('rowBonus40');
+    const showMetaNac = rowMetaNac?.style.display !== 'none';
+    const showMetaImp = rowMetaImp?.style.display !== 'none';
+    const showBonus40 = rowBonus40?.style.display !== 'none';
+
+    const now = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+    const html = `
+      <div class="p-header">
+        <div class="p-title">CALCULADORA DE GANHOS</div>
+        <div class="p-sub">Comissão + premiação &nbsp;·&nbsp; v1.3 &nbsp;·&nbsp; gerado em ${now} <span class="p-badge ${badgeClass}">${badgeLabel}</span></div>
+      </div>
+
+      <div class="p-section">Comissões</div>
+      <div class="p-row"><span class="p-label">Senha Individual (1%)</span><span class="p-value ${isZero(g('rSenha')) ? 'p-zero' : ''}">${g('rSenha')}</span></div>
+      <div class="p-row"><span class="p-label">Produtos Nacionais (0,50%)</span><span class="p-value ${isZero(g('rNacionais')) ? 'p-zero' : ''}">${g('rNacionais')}</span></div>
+      <div class="p-row"><span class="p-label">Produtos Importados (1%)</span><span class="p-value ${isZero(g('rImportados')) ? 'p-zero' : ''}">${g('rImportados')}</span></div>
+      <div class="p-row"><span class="p-label">Representante (0,50%)</span><span class="p-value ${isZero(g('rExterno')) ? 'p-zero' : ''}">${g('rExterno')}</span></div>
+      <div class="p-row"><span class="p-label" style="font-weight:700;color:#111">Subtotal Comissões</span><span class="p-value" style="color:#f0a500">${g('rSubtotal')}</span></div>
+
+      <div class="p-section">Premiação</div>
+      ${showMetaNac ? `<div class="p-row"><span class="p-label">Bônus meta — Nacionais (+0,50%)</span><span class="p-value ${isZero(g('rBonusMetaNac')) ? 'p-zero' : 'p-green'}">${g('rBonusMetaNac')}</span></div>` : ''}
+      ${showMetaImp ? `<div class="p-row"><span class="p-label">Bônus meta — Importados (+1,00%)</span><span class="p-value ${isZero(g('rBonusMetaImp')) ? 'p-zero' : 'p-green'}">${g('rBonusMetaImp')}</span></div>` : ''}
+      ${showBonus40 ? `<div class="p-row"><span class="p-label">Bônus 40% meta — Importados (+1%)</span><span class="p-value ${isZero(g('rBonus40')) ? 'p-zero' : 'p-green'}">${g('rBonus40')}</span></div>` : ''}
+
+      <div class="p-total-row">
+        <span class="p-total-label">TOTAL A RECEBER</span>
+        <span class="p-total-value">${g('totalGeral')}</span>
+      </div>
+
+      <div class="p-footer">Calculadora de Comissões · fmiterran.github.io/calculadora-comissoes</div>
+    `;
+
+    document.getElementById('printArea').innerHTML = html;
+    window.print();
   }
 </script>
 </body>
